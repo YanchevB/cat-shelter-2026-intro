@@ -1,8 +1,27 @@
 import http from 'http';
 import fs from 'fs/promises';
 import cats from './cats.js';
+import { addBreed, readBreeds } from './breedsService.js';
 
 const server = http.createServer(async (req, res) => {
+    console.log(readBreeds());
+    if(req.method === 'POST' && req.url === '/cats/add-breed') {
+        let body = '';
+        req.on('data', (chunk) => {
+            body += chunk;
+        });
+
+        req.on('end', (chunk) => {
+            const formData = new URLSearchParams(body);
+            const breedName = formData.get('breed');
+            addBreed(breedName);
+        })
+
+        //Redirect to home page
+        return res.writeHead(302, { Location: '/' }).end();
+    }
+
+    //GET Requests
     if (req.url === '/styles/site.css') {
         const cssContent = await fs.readFile('./styles/site.css', 'utf-8');
 
