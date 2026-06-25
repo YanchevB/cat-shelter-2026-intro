@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import cats from './cats.js';
 import { v4 } from 'uuid';
 import { addBreed, getBreedById, readBreeds, renderBreedOptions } from './breedsService.js';
-import { getCatById, getCatId, editCat } from './catService.js';
+import { getCatById, getCatId, editCat, deleteCat } from './catService.js';
 
 const server = http.createServer(async (req, res) => {
     //POST Requests
@@ -41,6 +41,13 @@ const server = http.createServer(async (req, res) => {
         return res.writeHead(302, { Location: '/'} ).end();
     }
 
+    if (req.method === 'POST' && req.url.startsWith('/cats/new-home')) {
+        const catId = getCatId(req);
+        
+        deleteCat(catId);
+        
+        return res.writeHead(302, { Location: '/' }).end();
+    }
     //GET Requests
     if (req.url === '/styles/site.css') {
         const cssContent = await fs.readFile('./styles/site.css', 'utf-8');
@@ -63,6 +70,10 @@ const server = http.createServer(async (req, res) => {
     } else if (req.url.startsWith('/cats/edit-cat')) {
         const catId = req.url.split('/').pop();
         htmlContent = await renderEditCatPage(catId);
+    } else if (req.url.startsWith('/cats/new-home')) {
+        const catId = req.url.split('/').pop();
+
+        htmlContent = await renderShelterPage(catId);
     }
 
     res.write(htmlContent);
@@ -70,6 +81,23 @@ const server = http.createServer(async (req, res) => {
     res.end();
 });
 
+
+async function renderShelterPage(catId) {
+    const cat = getCatById(catId);
+
+    if (!cat) {
+        return '<h1>Cat not found</h1>';
+    }
+
+    const htmlContent = await fs.readFile('./views/catShelter.html', 'utf-8');
+
+    const result = htmlContent.replaceAll('{{name}}', cat.name)
+        .replace('{{description}}', cat.description)
+        .replace('{{imageUrl}}', cat.imageUrl)
+        .replace('{{breedName}}', cat.breed)
+
+    return result;
+}
 
 async function renderAddCatPage() {
     const htmlContent = await fs.readFile('./views/addCat.html', 'utf-8');
@@ -97,7 +125,7 @@ async function renderHomePage() {
     <p><span>Description: </span>${cat.description}</p>
     <ul class="buttons">
     <li class="btn edit"><a href="/cats/edit-cat/${cat.id}">Change Info</a></li>
-    <li class="btn delete"><a href="">New Home</a></li>
+    <li class="btn delete"><a href="/cats/new-home/${cat.id}">New Home</a></li>
     </ul>
     </li>`;
     
@@ -108,6 +136,10 @@ async function renderHomePage() {
 
 async function renderEditCatPage(catId) {
     const cat = getCatById(catId);
+
+    if (!cat) {
+        return '<h1>Cat not found</h1>';
+    }
 
     const htmlContent = await fs.readFile('./views/editCat.html', 'utf-8');
     const result = htmlContent.replace('{{name}}', cat.name)

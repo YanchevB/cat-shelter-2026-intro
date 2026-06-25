@@ -18,3 +18,9 @@ export function editCat(catId, catData) {
         breed: getBreedById(catData.breed)
     };
 }
+
+export function deleteCat(catId) {
+    const catIndex = cats.findIndex(cat => cat.id === catId);
+
+    cats.splice(catIndex, 1);
+}
