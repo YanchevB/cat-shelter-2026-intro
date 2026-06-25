@@ -1,13 +1,11 @@
 import http from 'http';
 import fs from 'fs/promises';
 import cats from './cats.js';
+import { v4 } from 'uuid';
 import { addBreed, getBreedById, readBreeds } from './breedsService.js';
-import { getCatById } from './catService.js';
+import { getCatById, getCatId, editCat } from './catService.js';
 
 const server = http.createServer(async (req, res) => {
-
-    console.log(cats);
-
     //POST Requests
     if (req.method === 'POST' && req.url === '/cats/add-breed') {
         const bodyFormData = await readBodyFormData(req); 
@@ -23,6 +21,7 @@ const server = http.createServer(async (req, res) => {
         const breedId = bodyFormData.get('breed');
 
         const newCat = {
+            id: v4(),
             name: bodyFormData.get('name'),
             description: bodyFormData.get('description'),
             imageUrl: bodyFormData.get('imageUrl'),
@@ -30,6 +29,14 @@ const server = http.createServer(async (req, res) => {
         }
 
         cats.push(newCat);
+
+        return res.writeHead(302, { Location: '/'} ).end();
+    }
+
+    if (req.method === 'POST' && req.url.startsWith('/cats/edit-cat')) {
+        const catId = getCatId(req);
+        const editedCat = await readBodyFormData(req);
+        editCat(catId, Object.fromEntries(editedCat.entries()));
 
         return res.writeHead(302, { Location: '/'} ).end();
     }
