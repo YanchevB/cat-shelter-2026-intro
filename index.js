@@ -119,7 +119,7 @@ async function renderAddBreedPage() {
     return htmlContent;
 }
 
-async function renderHomePage(filter) {
+async function renderHomePage(filter = {}) {
     let htmlContent = await fs.readFile('./views/home/index.html', 'utf-8');
     
     const catTemplate = (cat) => `
@@ -136,7 +136,8 @@ async function renderHomePage(filter) {
 
     let cat = readCats(filter);
     
-    htmlContent = htmlContent.replace('{{cats}}', cat.map(c => catTemplate(c)).join('\n'));
+    htmlContent = htmlContent.replace('{{cats}}', cat.map(c => catTemplate(c)).join('\n'))
+        .replace('{{name}}', filter.name || '');
     
     return htmlContent;
 }
